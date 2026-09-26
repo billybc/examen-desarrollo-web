@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Perfil de usuario (nombre, apellido, correo, teléfono)
+    match /usuarios/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Vehículos en subasta
+    match /vehiculos/{id} {
+      allow read: if true;
+
+      // Publicar: requiere sesión, mínimo 5 fotos y precio base positivo
+      allow create: if request.auth != null
+        && request.resource.data.publicadorUid == request.auth.uid
+        && request.resource.data.fotos.size() >= 5
+        && request.resource.data.precioBase > 0;
+
+      allow update: if request.auth != null && (
+        // El dueño de la publicación puede editar la ficha completa
+        resource.data.publicadorUid == request.auth.uid
+        ||
+        // Cualquier usuario autenticado puede pujar, pero SOLO puede tocar estos 3 campos,
+        // dentro del tiempo de la subasta, y respetando precio base + incremento mínimo 10%.
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ofertaActual', 'ofertaActualUid', 'ultimaPujaAt'])
+          && request.time < resource.data.fechaCierre
+          && request.resource.data.ofertaActual >= resource.data.precioBase
+          && (resource.data.ofertaActual == 0 || request.resource.data.ofertaActual >= resource.data.ofertaActual * 1.10)
+        )
+      );
+    }
+  }
+}
