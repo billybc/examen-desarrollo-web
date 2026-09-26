@@ -8,6 +8,7 @@
 |---|---|
 | bcardonal1@miumg.edu.gt | Prueba123 |
 | tezo1@miumg.edu.gt | Prueba123 |
+| beduardol1@miumg.edu.gt | Prueba123 |
 
 *(Creados mediante el formulario de registro de la plataforma o en Firebase Console > Authentication).*
 
